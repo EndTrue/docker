@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
         libonig-dev \
         graphviz \
         git \
+        nano \
         curl
 
 # Clear cache
