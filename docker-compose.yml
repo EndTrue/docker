@@ -38,7 +38,7 @@ services:
   #MySQL Service
   mysql:
     image: mysql:8.0.20
-    command: 
+    command:
         - --default-authentication-plugin=mysql_native_password
         - --character-set-server=utf8mb4
     container_name: mysql
@@ -52,16 +52,11 @@ services:
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
     volumes:
-      - dbdata:/var/lib/mysql-files
+      - ./data/mysql:/var/lib/mysql-files
       - ./mysql/my.cnf:/etc/mysql/my.cnf
     networks:
       - app-network
-
 #Docker Networks
 networks:
   app-network:
     driver: bridge
-#Volumes
-volumes:
-  dbdata:
-    driver: local
