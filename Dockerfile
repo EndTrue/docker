@@ -1,55 +1,71 @@
-FROM php:7.4-fpm
+FROM php:7.4-fpm-alpine
 
 LABEL DarkSide="blacklife1992@gmail.com"
+
+ARG PUID=1000
+ARG PGID=1000
+ARG USER=docker
+ARG GROUP=docker
 
 # COPY composer.lock composer.json /var/www/
 
 WORKDIR /var/www
-
-
+USER root
 # Install dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-        libjpeg62-turbo-dev \
-        libmcrypt-dev \
-        libpng-dev \
-        zlib1g-dev \
-        libxml2-dev \
-        libzip-dev \
-        libonig-dev \
-        graphviz \
-        git \
-        nodejs \
-        npm \
-        nano \
-        curl
+#RUN apk --update add \
+#        php7-bcmath \
+#        php7-dom \
+#        php7-ctype \
+#        php7-curl \
+#        php7-fpm \
+#        php7-gd \
+#        php7-iconv \
+#        php7-intl \
+#        php7-json \
+#        php7-mbstring \
+#        php7-mcrypt \
+#        php7-mysqlnd \
+#        php7-opcache \
+#        php7-openssl \
+#        php7-pdo \
+#        php7-pdo_mysql \
+#        php7-pdo_pgsql \
+#        php7-pdo_sqlite \
+#        php7-phar \
+#        php7-posix \
+#        php7-session \
+#        php7-soap \
+#        php7-xml \
+#        php7-zip \
+#    && rm -rf /var/cache/apk/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install extensions
-RUN docker-php-ext-configure gd 
-RUN docker-php-ext-install -j$(nproc) gd 
-RUN docker-php-ext-install pdo_mysql 
-RUN docker-php-ext-install mysqli 
-RUN docker-php-ext-install zip 
-RUN docker-php-source delete
-
+RUN docker-php-ext-install mysqli && \
+    docker-php-ext-install pdo_mysql
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+RUN apk add --update nodejs-current npm
+
 # Add user for laravel application
-RUN groupadd -g 1000 www
-RUN useradd -u 1000 -ms /bin/bash -g www www
+RUN addgroup -g ${PGID} ${GROUP}
+
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "$(pwd)" \
+    --ingroup "$USER" \
+    --no-create-home \
+    --uid "$PUID" \
+    "$USER"
 
 # Copy existing application directory contents
 COPY . /var/www
 
 # Copy existing application directory permissions
-COPY --chown=www:www . /var/www
+COPY --chown=$USER:$GROUP . /var/www
 
 # Change current user to www
-USER www
+USER $USER
 
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
