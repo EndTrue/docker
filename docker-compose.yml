@@ -1,12 +1,12 @@
 version: '3'
-services:
 
+services:
   #PHP Service
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: php:7.4-fpm
+    image: php:7.4-fpm-alpine
     container_name: app
     restart: unless-stopped
     tty: true
@@ -35,28 +35,31 @@ services:
     networks:
       - app-network
 
-  #MySQL Service
+  ### MySQL ################################################
   mysql:
-    image: mysql:8.0.20
-    command:
-        - --default-authentication-plugin=mysql_native_password
-        - --character-set-server=utf8mb4
-    container_name: mysql
-    restart: unless-stopped
-    tty: true
-    ports:
-      - "3306:3306"
+    build:
+      context: ./mysql
+      args:
+        - MYSQL_VERSION=${MYSQL_VERSION}
     environment:
-      MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: your_mysql_root_password
-      SERVICE_TAGS: dev
-      SERVICE_NAME: mysql
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=${WORKSPACE_TIMEZONE}
     volumes:
-      - ./data/mysql:/var/lib/mysql-files
-      - ./mysql/my.cnf:/etc/mysql/my.cnf
+      - ${DATA_PATH_HOST}/mysql:/var/lib/mysql
+      - ${MYSQL_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+    ports:
+      - "${MYSQL_PORT}:3306"
     networks:
       - app-network
+
 #Docker Networks
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  mysql:
+    driver: local
